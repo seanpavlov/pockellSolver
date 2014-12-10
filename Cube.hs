@@ -22,4 +22,9 @@ newSolvedCube = Cube [Corner ([Red,Blue,Yellow],0), Corner ([Red,Yellow,Green],0
 --Side order: Front(F), Back(B), Left(L), Right(R), Up(U), Down(D)
 --Block order: Upper-Left, Upper-Right, Bottom Left, Bottom-Right
 sides :: Cube -> [[Color]]
-sides c = undefined
+sides c = 
+	where
+		front :: Cube -> [Color]
+		front (corners cs) = [colors!!state | x <- [0..3]]
+			where
+				(colors, state) = (cs!!x)
