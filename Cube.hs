@@ -64,3 +64,8 @@ updateStates c U = [(fst c),(mod (snd c)+x 3) | x <- [1,2,2,1]]
 isSolved :: Cube -> Bool
 isSolved c = all (==1) [length (groupBy (==) side) | side <- (sides c)]
 
+
+--Check if the cube is solved by checking that each side only has one color
+isSolved :: Cube -> Bool
+isSolved c = all (==1) [length (groupBy (==) side) | side <- (sides c)]
+
