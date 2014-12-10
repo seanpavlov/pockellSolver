@@ -35,12 +35,6 @@ sides c = [extractSide c (fst cidAndSt) (snd cidAndSt) | cidAndSt <-
 		cornerIdList = [[0..3], [4..7], [4,0,6,2], [1,5,3,7], [4,5,0,1], [2,3,6,7]]
 		stateList = [(replicate 4 0), (replicate 4 0), [2,1,1,2], [2,1,1,2], [1,2,2,1], [1,2,2,1]]
 
-<<<<<<< .merge_file_wNsMaC
-
-
-
-
-
 
 rotate :: Cube -> Move -> Cube
 rotate c F 	= Cube ([((corners c)!!x)|x <- [2,0,3,1]]++(drop 4 (corners c)))
@@ -64,8 +58,9 @@ updateStates c U = [(fst c),(mod (snd c)+x 3) | x <- [1,2,2,1]]
 (!!=) (x:xs) (i,a)
 	| i < 0 	= error "Invalid index" 
 	| otherwise = x:(xs !!= (i-1,a))
-=======
+
+
 --Check if the cube is solved by checking that each side only has one color
 isSolved :: Cube -> Bool
 isSolved c = all (==1) [length (groupBy (==) side) | side <- (sides c)]
->>>>>>> .merge_file_SGzWbC
+
