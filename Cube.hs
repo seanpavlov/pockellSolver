@@ -1,6 +1,7 @@
 module Cube where
 
 import Test.QuickCheck
+import Data.List
 
 
 data Cube = Cube { corners :: [Corner] }
@@ -31,3 +32,7 @@ sides c = [extractSide c (fst cidAndSt) (snd cidAndSt) | cidAndSt <-
 
 		cornerIdList = [[0..3], [4..7], [4,0,6,2], [1,5,3,7], [4,5,0,1], [2,3,6,7]]
 		stateList = [(replicate 4 0), (replicate 4 0), [2,1,1,2], [2,1,1,2], [1,2,2,1], [1,2,2,1]]
+
+--Check if the cube is solved by checking that each side only has one color
+isSolved :: Cube -> Bool
+isSolved c = all (==1) [length (groupBy (==) side) | side <- (sides c)]
