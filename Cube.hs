@@ -43,8 +43,11 @@ rotate c Fi = Cube ([((corners c)!!x)|x <- [1,3,0,2]]++(drop 4 (corners c)))
 rotate c F2 = rotate (rotate c F) F
 rotate c U =  updateCorners c (updateStates [((corners c)!!x)|x <- [0,1,4,5]] U) [4,0,5,1]
 
-updateStates :: [Corner] -> Move -> [Corner] 
-updateStates c U = [Corner ((fst (corner (snd x))),(mod ((snd (corner (snd x)))+(fst x)) 3))| x <- (zip [1,2,2,1] c)]  
+update :: Cube -> [Int] -> [Int] -> [Int] -> Cube
+update c oldPos newPos states = updateCorners c (updateStates [((corners c)!!x)|x <- oldPos states) newPos
+
+updateStates :: [Corner] -> [Int] -> [Corner] 
+updateStates c states = [Corner ((fst (corner (snd x))),(mod ((snd (corner (snd x)))+(fst x)) 3))| x <- (zip states c)]  
 
 updateCorners :: Cube -> [Corner] -> [Int] -> Cube
 updateCorners  c [] [] = c
