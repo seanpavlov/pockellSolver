@@ -29,31 +29,41 @@ newSolvedCube = Cube [Corner [(Red,Ff),(Blue,Lf),(Yellow,Uf)], Corner [(Red,Ff),
 --Side order: Front(F), Back(B), Left(L), Right(R), Up(U), Down(D)
 --Block order: Upper-Left, Upper-Right, Bottom Left, Bottom-Right
 sides :: Cube -> [[Color]]
-sides c = [[extractColor (corner ((corners c)!!x)) (fst idFace) | x <- (snd idFace)] | idFace <- zip [Ff,Bf,Lf,Rf,Uf,Df] [[0..3], [4..7], [4,0,6,2], [1,5,3,7], [4,5,0,1], [2,3,6,7]]]
+sides c = [[extractColor (corner ((corners c)!!x)) (fst idFace) | x <- (snd idFace)] | idFace <- zip [Ff,Bf,Lf,Rf,Uf,Df] [[0..3], [5,4,7,6], [4,0,6,2], [1,5,3,7], [4,5,0,1], [2,3,6,7]]]
 	where 
 		extractColor :: [(Color,Face)] -> Face -> Color
 		extractColor [] _ = error "toooooo much painz"
 		extractColor (c:cs) f
 			| (snd c) == f 	= fst c
-			| otherwise 	= extractColor cs f    
+			| otherwise 	= extractColor cs f
 
 
 rotate :: Cube -> Move -> Cube
-rotate c F 	= Cube ([((corners c)!!x)|x <- [2,0,3,1]]++(drop 4 (corners c)))
-rotate c Fi = Cube ([((corners c)!!x)|x <- [1,3,0,2]]++(drop 4 (corners c)))
+rotate c F 	= update c [0..3] [1,3,0,2] [[(Uf,Rf),(Lf,Uf)],[(Rf,Df),(Uf,Rf)],[(Lf,Uf),(Df,Lf)],[(Df,Lf),(Rf,Df)]]
+rotate c Fi = update c [0..3] [2,0,3,1] [[(Lf,Df),(Uf,Lf)],[(Uf,Lf),(Rf,Uf)],[(Df,Rf),(Lf,Df)],[(Rf,Uf),(Df,Rf)]]
 rotate c F2 = rotate (rotate c F) F
-rotate c U 	= update c [0,1,4,5] [4,0,5,1] [2,1,1,2]
-rotate c Ui = update c [0,1,4,5] (reverse [4,0,5,1]) [(-2),(-1),(-1),(-2)]
+rotate c U 	= update c [0,1,4,5] [4,0,5,1] [[(Lf,Bf),(Ff,Lf)],[(Ff,Lf),(Rf,Ff)],[(Bf,Rf),(Lf,Bf)],[(Rf,Ff),(Bf,Rf)]]
+rotate c Ui = update c [0,1,4,5] [1,5,0,4] [[(Ff,Rf),(Lf,Ff)],[(Rf,Bf),(Ff,Rf)],[(Lf,Ff),(Bf,Lf)],[(Bf,Lf),(Rf,Bf)]]
 rotate c U2 = rotate (rotate c U) U
-rotate c R 	= update c [1,3,5,7] [5,1,7,3] [2,1,1,2] 
-rotate c Ri = update c [1,3,5,7] (reverse [5,1,7,3]) [(-1),(-2),(-2),(-1)]
+rotate c R 	= update c [1,3,5,7] [5,1,7,3] [[(Uf,Bf),(Ff,Uf)],[(Ff,Uf),(Df,Ff)],[(Bf,Df),(Uf,Bf)],[(Df,Ff),(Bf,Df)]]
+rotate c Ri = update c [1,3,5,7] [3,7,1,5] [[(Ff,Df),(Uf,Ff)],[(Df,Bf),(Ff,Df)],[(Uf,Ff),(Bf,Uf)],[(Bf,Uf),(Df,Bf)]]
 rotate c R2 = rotate (rotate c R) R
 
-update :: Cube -> [Int] -> [Int] -> [Int] -> Cube
-update c oldPos newPos states = updateCorners c (updateStates [((corners c)!!x)|x <- oldPos] states) newPos
+update :: Cube -> [Int] -> [Int] -> [[(Face,Face)]] -> Cube
+update c oldPos newPos fs = updateCorners c (updateFaces [((corners c)!!x)|x <- oldPos] fs) newPos
 
-updateStates :: [Corner] -> [Int] -> [Corner] 
-updateStates c states = [Corner ((fst (corner (snd x))),(mod ((snd (corner (snd x)))+(fst x)) 3))| x <- (zip states c)]  
+updateFaces :: [Corner] -> [[(Face,Face)]] -> [Corner] 
+updateFaces c fs = [Corner (updateFace (corner (fst x)) (snd x)) | x <- (zip c fs)]
+	where
+		updateFace :: [(Color,Face)] -> [(Face,Face)] -> [(Color,Face)]
+		updateFace c [] = c
+		updateFace c (ff:ffs) = updateFace (updateSide c ff) ffs
+
+		updateSide :: [(Color,Face)] -> (Face,Face) -> [(Color,Face)]
+		updateSide (c:cs) ff
+			| not ((fst ff) == (snd c)) = c:(updateSide cs ff)
+			| otherwise					= ((fst c),(snd ff)):cs   
+
 
 updateCorners :: Cube -> [Corner] -> [Int] -> Cube
 updateCorners  c [] [] = c
