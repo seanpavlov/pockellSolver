@@ -2,6 +2,7 @@ module Cube where
 
 import Test.QuickCheck
 import Data.List
+import System.Random
 
 
 data Cube = Cube { corners :: [Corner] }
@@ -81,4 +82,26 @@ updateCorners  cube (c:cs) (p:ps) = updateCorners (Cube ((corners cube)!!=(p,c))
 isSolved :: Cube -> Bool
 isSolved c = all (==1) [length (groupBy (==) side) | side <- (sides c)]
 
+--Takes a StdGen, cube and number of random moves it should do and shuffles it
+--Returns a tuple with the shuffled cube and a list of moves it made to shuffle
+shuffle :: StdGen -> Cube -> Int -> (Cube, [Move])
+shuffle g c i = shuffle' g c i []
+	where
+		shuffle' :: StdGen -> Cube -> Int -> [Move] -> (Cube, [Move])
+		shuffle' g c i ms
+			| i == 0 = (c, ms)
+			| otherwise = shuffle' g' c' (i-1) (ms ++ [m'])
+			where
+				(n', g') = (randomR (0, 8) g)
+				(c', m') = rotateSide c n'
 
+				rotateSide :: Cube -> Int -> (Cube, Move)
+				rotateSide c 0 = ((rotate c F), F)
+				rotateSide c 1 = ((rotate c Fi), Fi)
+				rotateSide c 2 = ((rotate c F2), F2)
+				rotateSide c 3 = ((rotate c U), U)
+				rotateSide c 4 = ((rotate c Ui), Ui)
+				rotateSide c 5 = ((rotate c U2), U2)
+				rotateSide c 6 = ((rotate c R), R)
+				rotateSide c 7 = ((rotate c Ri), Ri)
+				rotateSide c 8 = ((rotate c R2), R2)
