@@ -41,7 +41,12 @@ rotate c F 	= Cube ([((corners c)!!x)|x <- [2,0,3,1]]++(drop 4 (corners c)))
 
 rotate c Fi = Cube ([((corners c)!!x)|x <- [1,3,0,2]]++(drop 4 (corners c)))
 rotate c F2 = rotate (rotate c F) F
-rotate c U =  updateCorners c (updateStates [((corners c)!!x)|x <- [0,1,4,5]] U) [4,0,5,1]
+rotate c U 	= update c [0,1,4,5] [4,0,5,1] [1,2,2,1]
+rotate c Ui = update c [0,1,4,5] (reverse [4,0,5,1]) [2,1,1,2]
+rotate c U2 = rotate (rotate c U) U
+rotate c R 	= update c [1,3,5,7] [5,1,7,3] [2,1,1,2] 
+rotate c Ri = update c [1,3,5,7] (reverse [5,1,7,3]) [1,2,2,1]
+rotate c R2 = rotate (rotate c R) R
 
 update :: Cube -> [Int] -> [Int] -> [Int] -> Cube
 update c oldPos newPos states = updateCorners c (updateStates [((corners c)!!x)|x <- oldPos states) newPos
