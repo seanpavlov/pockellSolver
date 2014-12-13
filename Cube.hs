@@ -2,6 +2,7 @@ module Cube where
 
 import Test.QuickCheck
 import Data.List
+import Data.Maybe
 import System.Random
 
 
@@ -105,3 +106,50 @@ shuffle g c i = shuffle' g c i []
 				rotateSide c 6 = ((rotate c R), R)
 				rotateSide c 7 = ((rotate c Ri), Ri)
 				rotateSide c 8 = ((rotate c R2), R2)
+				
+solve :: Cube -> Maybe (Cube,[Move])
+solve c = solve'' (c,[]) moveList
+	where
+		solve' :: (Cube,[Move]) -> Move -> Maybe (Cube,[Move])
+		solve' cm m
+			| (length (snd cm))>11	= Nothing
+			| isSolved (fst cm) 	= Just ((fst cm),(snd cm))
+			| any (==m) [F,Fi,F2] 	= solve'' cm (moveList\\[F,Fi,F2])
+			| any (==m) [U,Ui,U2] 	= solve'' cm (moveList\\[U,Ui,U2])
+			| any (==m) [R,Ri,R2] 	= solve'' cm (moveList\\[R,Ri,R2])
+		moveList = [F,Fi,F2,U,Ui,U2,R,Ri,R2]
+		solve'' :: (Cube,[Move]) -> [Move] -> Maybe (Cube,[Move])
+		solve'' cm (m:[]) 	= solve' ((rotate (fst cm) m),(snd cm)++[m]) m 
+		solve'' cm (m:ms) 	= do
+								let k = solve' ((rotate (fst cm) m),(snd cm)++[m]) m 
+								case k of
+									Nothing -> solve'' cm ms
+									Just _ 	-> k
+
+
+sortCM (c1,m1) (c2,m2)
+	| (length m1) <= (length m2) 	= GT
+	| (length m1) > (length m2) 	= LT
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
