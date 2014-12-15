@@ -131,8 +131,23 @@ sortCM (c1,m1) (c2,m2)
 	| (length m1) <= (length m2) 	= GT
 	| (length m1) > (length m2) 	= LT
 
+solveInputCube = undefined
 
-
+-- main = do
+		-- putStrLn "Input Cube"
+		-- corns = getLine
+		-- cube = [
+		-- putStrLn (solve 
+		
+charsToCorner :: [Char] -> Corner
+charsToCorner [] = []
+charsToCorner (c:cs) 
+	| c == "W" = White:charsToCorner cs
+	| c == "Y" = Yellow:charsToCorner cs
+	| c == "B" = Blue:charsToCorner cs
+	| c == "G" = Green:charsToCorner cs
+	| c == "R" = Red:charsToCorner cs
+	| c == "O" = Orange:charsToCorner cs
 
 
 
