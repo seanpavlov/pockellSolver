@@ -85,10 +85,10 @@ isSolved c = all (==1) [length (groupBy (==) side) | side <- (sides c)]
 
 --Takes a StdGen, cube and number of random moves it should do and shuffles it
 --Returns a tuple with the shuffled cube and a list of moves it made to shuffle
-shuffle :: StdGen -> Cube -> Int -> (Cube, [Move])
+shuffle :: StdGen -> Cube -> Integer -> (Cube, [Move])
 shuffle g c i = shuffle' g c i []
 	where
-		shuffle' :: StdGen -> Cube -> Int -> [Move] -> (Cube, [Move])
+		shuffle' :: StdGen -> Cube -> Integer -> [Move] -> (Cube, [Move])
 		shuffle' g c i ms
 			| i == 0 = (c, ms)
 			| otherwise = shuffle' g' c' (i-1) (ms ++ [m'])
@@ -136,9 +136,20 @@ solveInputCube = undefined
 main :: IO ()
 main = do 
 		putStrLn "Input Cube:"
-		cs <- getLine
-		putStr "Solution found! Moves:"
-		print (snd (fromJust ((solve (charsToCube(charsToColor cs))))))
+		cs <- getLine 
+		case cs of
+			"s" -> do 
+					putStrLn "Number of rotations for shuffle:"
+					snrLine <- getLine
+					let snr = read snrLine :: Integer
+					g <- newStdGen
+					putStr "Shuffle moves:"
+					print (snd (shuffle g newSolvedCube snr))
+					putStr "Solution found! Moves:"
+					print (snd (fromJust (solve (fst (shuffle g newSolvedCube snr)))))
+			_ -> do
+					putStr "Solution found! Moves:"
+					print (snd (fromJust ((solve (charsToCube(charsToColor cs))))))
 		
 charsToColor :: [Char] -> [Color]
 charsToColor [] = []
@@ -157,6 +168,12 @@ charsToCube cList = Cube [Corner [((cList!!(fst x)),(snd x)) | x <- zip (fst y) 
 
 cornersFromSides = [[0,9,18],[1,12,19],[2,11,20],[3,14,21],[5,8,16],[4,13,17],[7,10,22],[6,15,23]]
 faces = [[Ff,Lf,Uf],[Ff,Rf,Uf],[Ff,Lf,Df],[Ff,Rf,Df],[Bf,Lf,Uf],[Bf,Rf,Uf],[Bf,Lf,Df],[Bf,Rf,Df]]
+
+-----------PROPS-----------------------------------------------------------------------------------
+
+prop_sides Cube -> Bool
+prop_sides c = all (\x -> length x == 4) (sides c)
+
 
 
 
