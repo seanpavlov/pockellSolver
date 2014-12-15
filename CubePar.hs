@@ -133,8 +133,6 @@ sortCM (c1,m1) (c2,m2)
 	| (length m1) <= (length m2) 	= GT
 	| (length m1) > (length m2) 	= LT
 
-solveInputCube = undefined
-
 main :: IO ()
 main = do 
 		putStrLn "Input Cube:"
@@ -173,18 +171,32 @@ faces = [[Ff,Lf,Uf],[Ff,Rf,Uf],[Ff,Lf,Df],[Ff,Rf,Df],[Bf,Lf,Uf],[Bf,Rf,Uf],[Bf,L
 
 -----------PROPS-----------------------------------------------------------------------------------
 
-prop_sides Cube -> Bool
+prop_sides :: Cube -> Bool
 prop_sides c = all (\x -> (length x) == 4) (sides c)
 
-prop_solve Cube -> Bool
+prop_solve :: Cube -> Bool
 prop_solve c = isJust (solve c)
 
 -- prop_shuffle1 :: StdGen -> Integer -> Bool
 -- prop_shuffle1 std (Positive i) c1 c2 = (shuffle std newSolvedCube i) != (shuffle std newSolvedCube i)
 
-prop_shuffle2 :: StdGen -> Integer -> Bool
-prop_shuffle2 std (Positive i) = not (isSolved (shuffle std newSolvedCube i))
+prop_shuffle2 :: StdGen -> Integer -> Property
+prop_shuffle2 std i = i>1 ==> not (isSolved (fst(shuffle std newSolvedCube i)))
 
+prop_validCube :: Cube -> Bool
+prop_validCube c = and [(correctColors c),(correctCorners c),(correctFaces c)]
+	where
+		correctColors :: Cube -> Bool
+		correctColors c = all (\x -> (length x)==4) (groupBy (==) (foldr (++) [] (sides c)))
+		correctCorners :: Cube -> Bool
+		correctCorners c = ((length (corners c)) == 4)
+		correctFaces :: Cube -> Bool
+		correctFaces c = and [checkCorner ((corner (fst x)),(snd x))| x <- (zip (corners c) faces)]
+			where 
+				checkCorner :: ([(Color,Face)],[Face]) -> Bool
+				checkCorner (_,[]) = True
+				checkCorner ((c:cs),fs) = (elem (snd c) fs) && (checkCorner (cs,(delete (snd c) fs)))
+					
 
 
 
