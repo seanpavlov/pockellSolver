@@ -43,13 +43,13 @@ sides c = [[extractColor (corner ((corners c)!!x)) (fst idFace) | x <- (snd idFa
 rotate :: Cube -> Move -> Cube
 rotate c F 	= update c [0..3] [1,3,0,2] [[(Uf,Rf),(Lf,Uf)],[(Rf,Df),(Uf,Rf)],[(Lf,Uf),(Df,Lf)],[(Df,Lf),(Rf,Df)]]
 rotate c Fi = update c [0..3] [2,0,3,1] [[(Lf,Df),(Uf,Lf)],[(Uf,Lf),(Rf,Uf)],[(Df,Rf),(Lf,Df)],[(Rf,Uf),(Df,Rf)]]
-rotate c F2 = rotate (rotate c F) F
+rotate c F2 = update c [0..3] [3,2,1,0] [[(Lf,Rf),(Uf,Df)],[(Uf,Df),(Rf,Lf)],[(Df,Uf),(Lf,Rf)],[(Rf,Lf),(Df,Uf)]]
 rotate c U 	= update c [0,1,4,5] [4,0,5,1] [[(Lf,Bf),(Ff,Lf)],[(Ff,Lf),(Rf,Ff)],[(Bf,Rf),(Lf,Bf)],[(Rf,Ff),(Bf,Rf)]]
 rotate c Ui = update c [0,1,4,5] [1,5,0,4] [[(Ff,Rf),(Lf,Ff)],[(Rf,Bf),(Ff,Rf)],[(Lf,Ff),(Bf,Lf)],[(Bf,Lf),(Rf,Bf)]]
-rotate c U2 = rotate (rotate c U) U
+rotate c U2 = update c [0,1,4,5] [5,4,1,0] [[(Ff,Bf),(Lf,Rf)],[(Rf,Lf),(Ff,Bf)],[(Lf,Rf),(Bf,Ff)],[(Bf,Ff),(Rf,Lf)]]
 rotate c R 	= update c [1,3,5,7] [5,1,7,3] [[(Uf,Bf),(Ff,Uf)],[(Ff,Uf),(Df,Ff)],[(Bf,Df),(Uf,Bf)],[(Df,Ff),(Bf,Df)]]
 rotate c Ri = update c [1,3,5,7] [3,7,1,5] [[(Ff,Df),(Uf,Ff)],[(Df,Bf),(Ff,Df)],[(Uf,Ff),(Bf,Uf)],[(Bf,Uf),(Df,Bf)]]
-rotate c R2 = rotate (rotate c R) R
+rotate c R2 = update c [1,3,5,7] [7,5,3,1] [[(Ff,Bf),(Uf,Df)],[(Df,Uf),(Ff,Bf)],[(Uf,Df),(Bf,Ff)],[(Bf,Ff),(Df,Uf)]]
 
 update :: Cube -> [Int] -> [Int] -> [[(Face,Face)]] -> Cube
 update c oldPos newPos fs = updateCorners c (updateFaces [((corners c)!!x)|x <- oldPos] fs) newPos
@@ -133,21 +133,30 @@ sortCM (c1,m1) (c2,m2)
 
 solveInputCube = undefined
 
--- main = do
-		-- putStrLn "Input Cube"
-		-- corns = getLine
-		-- cube = [
-		-- putStrLn (solve 
+main :: IO ()
+main = do 
+		putStrLn "Input Cube:"
+		cs <- getLine
+		putStr "Solution found! Moves:"
+		print (snd (fromJust ((solve (charsToCube(charsToColor cs))))))
 		
-charsToCorner :: [Char] -> Corner
-charsToCorner [] = []
-charsToCorner (c:cs) 
-	| c == "W" = White:charsToCorner cs
-	| c == "Y" = Yellow:charsToCorner cs
-	| c == "B" = Blue:charsToCorner cs
-	| c == "G" = Green:charsToCorner cs
-	| c == "R" = Red:charsToCorner cs
-	| c == "O" = Orange:charsToCorner cs
+charsToColor :: [Char] -> [Color]
+charsToColor [] = []
+charsToColor (c:cs)
+	| c == ' ' = charsToColor cs
+	| c == 'W' = White:charsToColor cs
+	| c == 'Y' = Yellow:charsToColor cs
+	| c == 'B' = Blue:charsToColor cs
+	| c == 'G' = Green:charsToColor cs
+	| c == 'R' = Red:charsToColor cs
+	| c == 'O' = Orange:charsToColor cs
+
+charsToCube :: [Color] -> Cube
+charsToCube cList = Cube [Corner [((cList!!(fst x)),(snd x)) | x <- zip (fst y) (snd y)] | y <- zip cornersFromSides faces]
+
+
+cornersFromSides = [[0,9,18],[1,12,19],[2,11,20],[3,14,21],[5,8,16],[4,13,17],[7,10,22],[6,15,23]]
+faces = [[Ff,Lf,Uf],[Ff,Rf,Uf],[Ff,Lf,Df],[Ff,Rf,Df],[Bf,Lf,Uf],[Bf,Rf,Uf],[Bf,Lf,Df],[Bf,Rf,Df]]
 
 
 
