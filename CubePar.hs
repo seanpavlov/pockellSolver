@@ -4,6 +4,7 @@ import Control.Parallel
 import Test.QuickCheck
 import Data.List
 import Data.Maybe
+import Data.Char
 import System.Random
 
 
@@ -86,10 +87,10 @@ isSolved c = all (==1) [length (groupBy (==) side) | side <- (sides c)]
 
 --Takes a StdGen, cube and number of random moves it should do and shuffles it
 --Returns a tuple with the shuffled cube and a list of moves it made to shuffle
-shuffle :: StdGen -> Cube -> Int -> (Cube, [Move])
+shuffle :: StdGen -> Cube -> Integer -> (Cube, [Move])
 shuffle g c i = shuffle' g c i []
 	where
-		shuffle' :: StdGen -> Cube -> Int -> [Move] -> (Cube, [Move])
+		shuffle' :: StdGen -> Cube -> Integer -> [Move] -> (Cube, [Move])
 		shuffle' g c i ms
 			| i == 0 = (c, ms)
 			| otherwise = shuffle' g' c' (i-1) (ms ++ [m'])
@@ -137,9 +138,20 @@ solveInputCube = undefined
 main :: IO ()
 main = do 
 		putStrLn "Input Cube:"
-		cs <- getLine
-		putStr "Solution found! Moves:"
-		print (snd (fromJust ((solve (charsToCube(charsToColor cs))))))
+		cs <- getLine 
+		case cs of
+			"s" -> do 
+					putStrLn "Number of rotations for shuffle:"
+					snrLine <- getLine
+					let snr = read snrLine :: Integer
+					g <- newStdGen
+					putStr "Shuffle moves:"
+					print (snd (shuffle g newSolvedCube snr))
+					putStr "Solution found! Moves:"
+					print (snd (fromJust (solve (fst (shuffle g newSolvedCube snr)))))
+			_ -> do
+					putStr "Solution found! Moves:"
+					print (snd (fromJust ((solve (charsToCube(charsToColor cs))))))
 		
 charsToColor :: [Char] -> [Color]
 charsToColor [] = []
