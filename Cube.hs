@@ -172,11 +172,16 @@ faces = [[Ff,Lf,Uf],[Ff,Rf,Uf],[Ff,Lf,Df],[Ff,Rf,Df],[Bf,Lf,Uf],[Bf,Rf,Uf],[Bf,L
 -----------PROPS-----------------------------------------------------------------------------------
 
 prop_sides Cube -> Bool
-prop_sides c = all (\x -> length x == 4) (sides c)
+prop_sides c = all (\x -> (length x) == 4) (sides c)
 
+prop_solve Cube -> Bool
+prop_solve c = isJust (solve c)
 
+-- prop_shuffle1 :: StdGen -> Integer -> Bool
+-- prop_shuffle1 std (Positive i) c1 c2 = (shuffle std newSolvedCube i) != (shuffle std newSolvedCube i)
 
-
+prop_shuffle2 :: StdGen -> Integer -> Bool
+prop_shuffle2 std (Positive i) = not (isSolved (shuffle std newSolvedCube i))
 
 
 
