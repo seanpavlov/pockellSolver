@@ -17,7 +17,7 @@ data Corner = Corner { corner :: [(Color, Face)] }
 
 --Color corresponding to side: White(D), Yellow(U), Red(F), Orange(B), Green(R), Blue(L)
 data Color = White | Yellow | Red | Orange | Blue | Green
-	deriving (Eq, Show)
+	deriving (Eq, Show, Ord)
 
 data Move = F | Fi | F2 | R | Ri | R2 | U | Ui | U2
 	deriving (Show,Eq)
@@ -143,13 +143,15 @@ main = do
 					snrLine <- getLine
 					let snr = read snrLine :: Integer
 					g <- newStdGen
-					putStr "Shuffle moves:"
+					putStr "Shuffle moves: "
 					print (snd (shuffle g newSolvedCube snr))
-					putStr "Solution found! Moves:"
+					putStrLn "Solving..."
 					print (snd (fromJust (solve (fst (shuffle g newSolvedCube snr)))))
+					putStrLn "Solution found! Moves: ^"
 			_ -> do
-					putStr "Solution found! Moves:"
-					print (snd (fromJust ((solve (charsToCube(charsToColor cs))))))
+					putStrLn "Solving..."
+					print (snd (fromJust ((solve (charsToCube(charsToColor (map toUpper cs)))))))
+					putStrLn "Solution found! Moves: ^"
 		
 charsToColor :: [Char] -> [Color]
 charsToColor [] = []
@@ -161,10 +163,34 @@ charsToColor (c:cs)
 	| c == 'G' = Green:charsToColor cs
 	| c == 'R' = Red:charsToColor cs
 	| c == 'O' = Orange:charsToColor cs
+	| otherwise = error "Wrong input. Valid inputs are: W, Y, B, G, R, O."
 
 charsToCube :: [Color] -> Cube
-charsToCube cList = Cube [Corner [((cList!!(fst x)),(snd x)) | x <- zip (fst y) (snd y)] | y <- zip cornersFromSides faces]
+charsToCube cList = do
+						case (length cList) of
+							24 -> do
+								let c = Cube [Corner [((cList!!(fst x)),(snd x)) | 
+										x <- zip (fst y) (snd y)] | y <- zip cornersFromSides faces]
+								case (isValidCube c) of
+									True 	-> c
+									False 	-> error "Not a valid cube."
+							_ -> error "Incorrect number of colors."
 
+isValidCube :: Cube -> Bool
+isValidCube c = and [(correctColors c),(correctNbrOfCorners c),(correctFaces c)]
+	where
+		correctColors :: Cube -> Bool
+		correctColors c = all (\x -> (length x)==4) (groupBy (==) (sort (foldr (++) [] (sides c))))
+		correctNbrOfCorners :: Cube -> Bool
+		correctNbrOfCorners c = ((length (corners c)) == 8)
+		correctFaces :: Cube -> Bool
+		correctFaces c = and [checkCorner ((corner (fst x)),(snd x)) | 
+			x <- (zip (corners c) faces)]
+			where 
+				checkCorner :: ([(Color,Face)],[Face]) -> Bool
+				checkCorner (_,[]) = True
+				checkCorner ((c:cs),fs) = (elem (snd c) fs) &&
+					(checkCorner (cs,(delete (snd c) fs)))
 
 cornersFromSides = [[0,9,18],[1,12,19],[2,11,20],[3,14,21],[5,8,16],[4,13,17],[7,10,22],[6,15,23]]
 faces = [[Ff,Lf,Uf],[Ff,Rf,Uf],[Ff,Lf,Df],[Ff,Rf,Df],[Bf,Lf,Uf],[Bf,Rf,Uf],[Bf,Lf,Df],[Bf,Rf,Df]]
@@ -184,18 +210,26 @@ prop_shuffle2 :: StdGen -> Integer -> Property
 prop_shuffle2 std i = i>1 ==> not (isSolved (fst(shuffle std newSolvedCube i)))
 
 prop_validCube :: Cube -> Bool
-prop_validCube c = and [(correctColors c),(correctCorners c),(correctFaces c)]
-	where
-		correctColors :: Cube -> Bool
-		correctColors c = all (\x -> (length x)==4) (groupBy (==) (foldr (++) [] (sides c)))
-		correctCorners :: Cube -> Bool
-		correctCorners c = ((length (corners c)) == 4)
-		correctFaces :: Cube -> Bool
-		correctFaces c = and [checkCorner ((corner (fst x)),(snd x))| x <- (zip (corners c) faces)]
-			where 
-				checkCorner :: ([(Color,Face)],[Face]) -> Bool
-				checkCorner (_,[]) = True
-				checkCorner ((c:cs),fs) = (elem (snd c) fs) && (checkCorner (cs,(delete (snd c) fs)))
+prop_validCube = isValidCube
+
+-- moves generates an arbitrary cell in a Sudoku
+color :: Gen (Color)
+color = frequency [(1, return Red), (1, return Orange), (1, return Blue),
+	(1, return Green), (1, return Yellow), (1, return White)]
+
+-- an instance for generating Arbitrary Cubes
+instance Arbitrary Cube where
+	arbitrary =
+		do 	randomColors <- sequence [ sequence [ color | j <- [1..3] ] | i <- [1..8] ]
+			return (Cube [Corner [ ((fst y), (snd y)) | y <- zip (fst x) (snd x)] | x <- zip randomColors faces])
+ 
+
+{--- an instance for generating Arbitrary Cubes
+instance Arbitrary Cube where
+	arbitrary =
+  		do 	g <- newStdGen
+  			let (n', g') = (randomR (1, 100) g)
+  			return (fst (shuffle g newSolvedCube n'))-}
 					
 
 
