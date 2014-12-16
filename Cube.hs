@@ -50,13 +50,13 @@ main = do
 					putStrLn "Solution found! Moves: ^"
 			_ -> do
 					putStrLn "Solving..."
-					print (snd (fromJust ((solve (charsToCube(charsToColor 
-						(map toUpper cs)))))))
+					print (snd (fromJust (solve (charsToCube(charsToColor 
+						(map toUpper cs))))))
 					putStrLn "Solution found! Moves: ^"
 
 	where
 		--Given	list of chars translates them into colors.
-		charsToColor :: [Char] -> [Color]
+		charsToColor :: String -> [Color]
 		charsToColor [] = []
 		charsToColor (c:cs)
 			| c == ' ' = charsToColor cs
@@ -70,15 +70,15 @@ main = do
 
 		--Given a list of colors, translates them into a cube.
 		charsToCube :: [Color] -> Cube
-		charsToCube cList = do
-			case (length cList) of
+		charsToCube cList = 
+			case length cList of
 				24 -> do
-					let c = Cube [Corner [((cList!!(fst x)),(snd x)) | 
-							x <- zip (fst y) (snd y)] | 
+					let c = Cube [Corner [(cList!!fst x,snd x) | 
+							x <- uncurry zip y] | 
 							y <- zip cornersFromSides faces]
-					case (isValidCube c) of
-						True 	-> c
-						False 	-> error "Not a valid cube."
+					if isValidCube c 
+						then c 
+						else error "Not a valid cube."
 				_ -> error "Incorrect number of colors."
 
 --Gives a new solved cube with: White(Down), Yellow(Up), Red(Front), 
@@ -96,14 +96,14 @@ newSolvedCube = Cube [Corner [(Red,Ff),(Blue,Lf),(Yellow,Uf)],
 --Side order: Front(F), Back(B), Left(L), Right(R), Up(U), Down(D)
 --Block order: Upper-Left, Upper-Right, Bottom Left, Bottom-Right
 sides :: Cube -> [[Color]]
-sides c = [[extractColor (faceColors ((corners c)!!x)) (fst idFace) | 
-			x <- (snd idFace)] | idFace <- zip [Ff,Bf,Lf,Rf,Uf,Df] [[0..3], 
+sides c = [[extractColor (faceColors (corners c!!x)) (fst idFace) | 
+			x <- snd idFace] | idFace <- zip [Ff,Bf,Lf,Rf,Uf,Df] [[0..3], 
 			[5,4,7,6], [4,0,6,2], [1,5,3,7], [4,5,0,1], [2,3,6,7]]]
 	where 
 		extractColor :: [(Color,Face)] -> Face -> Color
 		extractColor [] _ = error "toooooo much painz"
 		extractColor (c:cs) f
-			| (snd c) == f 	= fst c
+			| snd c == f 	= fst c
 			| otherwise 	= extractColor cs f
 
 --Rotates a cube depending on what move is given.
@@ -130,25 +130,24 @@ rotate c f
 	where
 		update :: Cube -> [Int] -> [Int] -> [[(Face,Face)]] -> Cube
 		update c oldPos newPos fs = updateCorners c (updateFaces 
-			[((corners c)!!x)|x <- oldPos] fs) newPos
+			[corners c!!x | x <- oldPos] fs) newPos
 			
 		updateFaces :: [Corner] -> [[(Face,Face)]] -> [Corner] 
 		updateFaces c fs = [Corner (updateFace 
-			(faceColors (fst x)) (snd x)) | x <- (zip c fs)]
+			(faceColors (fst x)) (snd x)) | x <- zip c fs]
 			
 		updateFace :: [(Color,Face)] -> [(Face,Face)] -> [(Color,Face)]
-		updateFace c [] = c
-		updateFace c (ff:ffs) = updateFace (updateSide c ff) ffs
+		updateFace = foldl updateSide
 
 		updateSide :: [(Color,Face)] -> (Face,Face) -> [(Color,Face)]
 		updateSide (c:cs) ff
-			| not ((fst ff) == (snd c)) = c:(updateSide cs ff)
-			| otherwise					= ((fst c),(snd ff)):cs   
+			| fst ff /= snd c 			= c:updateSide cs ff
+			| otherwise					= (fst c,snd ff):cs   
 
 		updateCorners :: Cube -> [Corner] -> [Int] -> Cube
 		updateCorners  c [] [] = c
 		updateCorners  cube (c:cs) (p:ps) = 
-			updateCorners (Cube ((corners cube)!!=(p,c))) cs ps
+			updateCorners (Cube (corners cube!!=(p,c))) cs ps
 
 		(!!=) :: [a] -> (Int,a) -> [a]
 		(!!=) [] 		_ 	= []
@@ -160,7 +159,7 @@ rotate c f
 
 --Check if the cube is solved by checking that each side only has one color
 isSolved :: Cube -> Bool
-isSolved c = all (==1) [length (groupBy (==) side) | side <- (sides c)]
+isSolved c = all (==1) [length (groupBy (==) side) | side <- sides c]
 
 --Takes a StdGen, cube and number of random moves it should do
 --and shuffles it. Returns a tuple with the shuffled cube
@@ -173,19 +172,19 @@ shuffle g c i = shuffle' g c i []
 			| i == 0 = (c, ms)
 			| otherwise = shuffle' g' c' (i-1) (ms ++ [m'])
 			where
-				(n', g') = (randomR (0, 8) g)
+				(n', g') = randomR (0, 8) g
 				(c', m') = rotateSide c n'
 
 				rotateSide :: Cube -> Int -> (Cube, Move)
-				rotateSide c 0 = ((rotate c F), F)
-				rotateSide c 1 = ((rotate c Fi), Fi)
-				rotateSide c 2 = ((rotate c F2), F2)
-				rotateSide c 3 = ((rotate c U), U)
-				rotateSide c 4 = ((rotate c Ui), Ui)
-				rotateSide c 5 = ((rotate c U2), U2)
-				rotateSide c 6 = ((rotate c R), R)
-				rotateSide c 7 = ((rotate c Ri), Ri)
-				rotateSide c 8 = ((rotate c R2), R2)
+				rotateSide c 0 = (rotate c F, F)
+				rotateSide c 1 = (rotate c Fi, Fi)
+				rotateSide c 2 = (rotate c F2, F2)
+				rotateSide c 3 = (rotate c U, U)
+				rotateSide c 4 = (rotate c Ui, Ui)
+				rotateSide c 5 = (rotate c U2, U2)
+				rotateSide c 6 = (rotate c R, R)
+				rotateSide c 7 = (rotate c Ri, Ri)
+				rotateSide c 8 = (rotate c R2, R2)
 
 --Rotates a cube all possible ways in all states recursievly
 --and returns the first occurence of a solved cube.			
@@ -194,44 +193,44 @@ solve c = solve'' (c,[]) moveList
 	where
 		solve' :: (Cube,[Move]) -> Move -> Maybe (Cube,[Move])
 		solve' cm m
-			| (length (snd cm))>11	= Nothing
-			| isSolved (fst cm) 	= Just ((fst cm),(snd cm))
-			| any (==m) [F,Fi,F2] 	= solve'' cm (moveList\\[F,Fi,F2])
-			| any (==m) [U,Ui,U2] 	= solve'' cm (moveList\\[U,Ui,U2])
-			| any (==m) [R,Ri,R2] 	= solve'' cm (moveList\\[R,Ri,R2])
+			| length (snd cm)>11	= Nothing
+			| isSolved (fst cm) 	= Just cm
+			| elem m [F,Fi,F2] 	= solve'' cm (moveList\\[F,Fi,F2])
+			| elem m [U,Ui,U2] 	= solve'' cm (moveList\\[U,Ui,U2])
+			| elem m [R,Ri,R2] 	= solve'' cm (moveList\\[R,Ri,R2])
 		moveList = [F,Fi,F2,U,Ui,U2,R,Ri,R2]
 		solve'' :: (Cube,[Move]) -> [Move] -> Maybe (Cube,[Move])
-		solve'' cm (m:[]) 	= solve' ((rotate (fst cm) m),(snd cm)++[m]) m 
+		solve'' cm (m:[]) 	= solve' (rotate (fst cm) m,snd cm++[m]) m 
 		solve'' cm (m:ms) 	= do
-			let k = solve' ((rotate (fst cm) m),(snd cm)++[m]) m 
+			let k = solve' (rotate (fst cm) m,snd cm++[m]) m 
 			case k of
 				Nothing -> solve'' cm ms
 				Just _ 	-> k
 
 sortCM (c1,m1) (c2,m2)
-	| (length m1) <= (length m2) 	= GT
-	| (length m1) > (length m2) 	= LT
+	| length m1 <= length m2 	= GT
+	| length m1 > length m2 	= LT
 
 
 --Checks whether a cube is valid.
 --(Correct number of colors, faces on edges and number of corners)
 isValidCube :: Cube -> Bool
-isValidCube c = and [(correctColors c),
-	(correctNbrOfCorners c),(correctFaces c)]
+isValidCube c = correctColors c &&
+	correctNbrOfCorners c && correctFaces c
 	where
 		correctColors :: Cube -> Bool
-		correctColors c = all (\x -> (length x)==4) 
-			(groupBy (==) (sort (foldr (++) [] (sides c))))
+		correctColors c = all (\x -> length x==4) 
+			(groupBy (==) (sort (concat (sides c))))
 		correctNbrOfCorners :: Cube -> Bool
-		correctNbrOfCorners c = ((length (corners c)) == 8)
+		correctNbrOfCorners c = length (corners c) == 8
 		correctFaces :: Cube -> Bool
-		correctFaces c = and [checkCorner ((faceColors (fst x)),(snd x)) | 
-			x <- (zip (corners c) faces)]
+		correctFaces c = and [checkCorner (faceColors (fst x),snd x) | 
+			x <- zip (corners c) faces]
 			where 
 				checkCorner :: ([(Color,Face)],[Face]) -> Bool
 				checkCorner (_,[]) = True
-				checkCorner ((c:cs),fs) = (elem (snd c) fs) &&
-					(checkCorner (cs,(delete (snd c) fs)))
+				checkCorner (c:cs,fs) = elem (snd c) fs &&
+					checkCorner (cs,delete (snd c) fs)
 
 cornersFromSides = [[0,9,18],[1,12,19],[2,11,20],[3,14,21],
 					[5,8,16],[4,13,17],[7,10,22],[6,15,23]]
@@ -241,7 +240,7 @@ faces = [[Ff,Lf,Uf],[Ff,Rf,Uf],[Ff,Lf,Df],[Ff,Rf,Df],
 -----------PROPS-------------------------------------------------------------
 
 prop_sides :: Cube -> Bool
-prop_sides c = all (\x -> (length x) == 4) (sides c)
+prop_sides c = all (\x -> length x == 4) (sides c)
 
 prop_solve :: Cube -> Bool
 prop_solve c = isJust (solve c)
@@ -256,7 +255,7 @@ prop_validCube :: Cube -> Bool
 prop_validCube = isValidCube
 
 -- moves generates an arbitrary cell in a Sudoku
-color :: Gen (Color)
+color :: Gen Color
 color = frequency [(1, return Red), (1, return Orange), (1, return Blue),
 	(1, return Green), (1, return Yellow), (1, return White)]
 
@@ -264,7 +263,7 @@ color = frequency [(1, return Red), (1, return Orange), (1, return Blue),
 instance Arbitrary Cube where
 	arbitrary =
 		do 	randomColors <- sequence [ sequence [ color | j <- [1..3] ] | i <- [1..8] ]
-			return (Cube [Corner [ ((fst y), (snd y)) | y <- zip (fst x) (snd x)] | x <- zip randomColors faces])
+			return (Cube [Corner (uncurry zip x) | x <- zip randomColors faces])
  
 
 {--- an instance for generating Arbitrary Cubes
