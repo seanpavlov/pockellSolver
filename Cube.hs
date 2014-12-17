@@ -101,7 +101,7 @@ sides c = [[extractColor (faceColors (corners c!!x)) (fst idFace) |
 			[5,4,7,6], [4,0,6,2], [1,5,3,7], [4,5,0,1], [2,3,6,7]]]
 	where 
 		extractColor :: [(Color,Face)] -> Face -> Color
-		extractColor [] _ = error "toooooo much painz"
+		extractColor [] _ = error "Corner-Face does not match (invalid cube)"
 		extractColor (c:cs) f
 			| snd c == f 	= fst c
 			| otherwise 	= extractColor cs f
@@ -148,7 +148,9 @@ rotate c f
 		updateCorners  c [] [] = c
 		updateCorners  cube (c:cs) (p:ps) = 
 			updateCorners (Cube (corners cube!!=(p,c))) cs ps
-
+		
+		--This fuction was written and copied from our previous work on the
+		--- Sudoku-lab.
 		(!!=) :: [a] -> (Int,a) -> [a]
 		(!!=) [] 		_ 	= []
 		(!!=) (x:xs) (0,a) 	= a:xs
@@ -232,8 +234,10 @@ isValidCube c = correctColors c &&
 				checkCorner (c:cs,fs) = elem (snd c) fs &&
 					checkCorner (cs,delete (snd c) fs)
 
+--A list of indexes of sides for each corner.
 cornersFromSides = [[0,9,18],[1,12,19],[2,11,20],[3,14,21],
 					[5,8,16],[4,13,17],[7,10,22],[6,15,23]]
+-- Faces corresponding to each corner.
 faces = [[Ff,Lf,Uf],[Ff,Rf,Uf],[Ff,Lf,Df],[Ff,Rf,Df],
 					[Bf,Lf,Uf],[Bf,Rf,Uf],[Bf,Lf,Df],[Bf,Rf,Df]]
 
@@ -242,36 +246,44 @@ faces = [[Ff,Lf,Uf],[Ff,Rf,Uf],[Ff,Lf,Df],[Ff,Rf,Df],
 prop_sides :: Cube -> Bool
 prop_sides c = all (\x -> length x == 4) (sides c)
 
-prop_solve :: Cube -> Bool
-prop_solve c = isJust (solve c)
+-- Way to slow.
+-- prop_solve :: Cube -> Bool
+-- prop_solve c = isSolved c' && isValidCube c'
+-- 	where c' = (fst (fromJust (solve c)))
 
--- prop_shuffle1 :: StdGen -> Integer -> Bool
--- prop_shuffle1 std (Positive i) c1 c2 = (shuffle std newSolvedCube i) != (shuffle std newSolvedCube i)
+prop_shuffle1 :: StdGen -> StdGen -> Integer -> Property
+prop_shuffle1 std1 std2 i = i>10 ==>  (shuffle std1 newSolvedCube i) 
+											/= (shuffle std2 newSolvedCube i)
 
 prop_shuffle2 :: StdGen -> Integer -> Property
-prop_shuffle2 std i = i>1 ==> not (isSolved (fst(shuffle std newSolvedCube i)))
+prop_shuffle2 std i = i>10 ==> not (isSolved 
+										(fst(shuffle std newSolvedCube i)))
 
 prop_validCube :: Cube -> Bool
 prop_validCube = isValidCube
 
--- moves generates an arbitrary cell in a Sudoku
-color :: Gen Color
-color = frequency [(1, return Red), (1, return Orange), (1, return Blue),
-	(1, return Green), (1, return Yellow), (1, return White)]
+prop_rotation :: Cube -> Bool
+prop_rotation c = all (==c) [rotate (rotate c (fst x)) (snd x) | 
+							x <- zip [F,F2,U,U2,R,R2] [Fi,F2,Ui,U2,Ri,R2]] 
+
+--generates an arbitrary cube
+cube :: Gen Cube
+cube = do 
+		n <- elements [10..100]
+		k <- arbitrary
+		let g = mkStdGen k
+		return (fst (shuffle g newSolvedCube n))
 
 -- an instance for generating Arbitrary Cubes
 instance Arbitrary Cube where
-	arbitrary =
-		do 	randomColors <- sequence [ sequence [ color | j <- [1..3] ] | i <- [1..8] ]
-			return (Cube [Corner (uncurry zip x) | x <- zip randomColors faces])
- 
+	arbitrary = cube 
 
-{--- an instance for generating Arbitrary Cubes
-instance Arbitrary Cube where
-	arbitrary =
-  		do 	g <- newStdGen
-  			let (n', g') = (randomR (1, 100) g)
-  			return (fst (shuffle g newSolvedCube n'))-}
+
+--Code copied from the blackjack lab, namely Cards.hs
+instance Arbitrary StdGen where
+  arbitrary = do n <- arbitrary
+                 return (mkStdGen n)
+
 					
 
 
